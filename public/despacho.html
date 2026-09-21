@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Central de Despacho de Ambulancias</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%9A%91</text></svg>">
+</head>
+<body>
+  <div id="topo"></div>
+
+  <main class="conteudo">
+    <div id="aviso-global" class="aviso"></div>
+
+    <div class="cartao">
+      <div class="cabecalho"><h2 class="cresce">Indicadores da central</h2>
+        <span class="discreto" id="atualizado"></span></div>
+      <div class="metricas" id="indicadores"></div>
+    </div>
+
+    <div class="colunas c2" style="margin-top:1rem">
+      <div>
+        <div class="cartao">
+          <div class="cabecalho"><h2 class="cresce">Fila de chamados</h2>
+            <select id="filtro-chamados" style="width:auto">
+              <option value="ativos">Ativos</option>
+              <option value="todos">Todos</option>
+              <option value="concluido">Concluidos</option>
+            </select>
+          </div>
+          <div id="lista-chamados"><p class="vazio">Carregando...</p></div>
+        </div>
+
+        <div class="cartao">
+          <div class="cabecalho"><h3 class="cresce">Frota</h3></div>
+          <div id="lista-frota"></div>
+        </div>
+
+        <div class="cartao" id="cartao-novo-chamado">
+          <div class="cabecalho"><h3 class="cresce">Registrar chamado</h3></div>
+          <div id="aviso-chamado" class="aviso"></div>
+          <form id="form-chamado">
+            <div class="linha">
+              <div><label>Nome do solicitante</label><input name="solicitante_nome" required></div>
+              <div><label>Telefone</label><input name="solicitante_telefone" placeholder="47 9....."></div>
+            </div>
+            <label>Endereco da ocorrencia</label>
+            <input name="endereco" required placeholder="Rua, numero - bairro">
+            <div class="linha3">
+              <div><label>Latitude</label><input name="lat" type="number" step="any" value="-26.3045" required></div>
+              <div><label>Longitude</label><input name="lng" type="number" step="any" value="-48.8487" required></div>
+              <div>
+                <label>Prioridade informada</label>
+                <select name="prioridade">
+                  <option value="1">1 - Emergencia</option><option value="2">2 - Muito urgente</option>
+                  <option value="3" selected>3 - Urgente</option><option value="4">4 - Pouco urgente</option>
+                  <option value="5">5 - Nao urgente</option>
+                </select>
+              </div>
+            </div>
+            <label>Natureza</label>
+            <select name="natureza">
+              <option value="clinico">Clinico</option><option value="trauma">Trauma</option>
+              <option value="cardiaco">Cardiaco</option><option value="respiratorio">Respiratorio</option>
+              <option value="obstetrico">Obstetrico</option><option value="psiquiatrico">Psiquiatrico</option>
+              <option value="intoxicacao">Intoxicacao</option><option value="transferencia">Transferencia</option>
+            </select>
+            <label>Relato do solicitante</label>
+            <textarea name="descricao" style="min-height:64px"
+              placeholder="Descreva o que o solicitante relatou. O sistema reclassifica o risco a partir do relato."></textarea>
+            <button class="btn" type="submit">Abrir chamado e triar</button>
+          </form>
+        </div>
+      </div>
+
+      <div>
+        <div class="cartao">
+          <div class="cabecalho"><h3 class="cresce">Mapa operacional</h3>
+            <span class="discreto">ambulancias e ocorrencias</span></div>
+          <svg class="mapa" id="mapa" viewBox="0 0 600 340" preserveAspectRatio="xMidYMid meet"></svg>
+          <p class="discreto" style="margin:.5rem 0 0">
+            <span class="etq verde">&#9679;</span> disponivel
+            <span class="etq amarelo">&#9679;</span> em missao
+            <span class="etq neutro">&#9650;</span> ocorrencia
+          </p>
+        </div>
+        <div id="detalhe-chamado">
+          <div class="cartao"><p class="vazio">Selecione um chamado para ver os detalhes e despachar.</p></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="/js/despacho.js"></script>
+</body>
+</html>

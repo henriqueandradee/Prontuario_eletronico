@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trilha de Auditoria &middot; Conformidade</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%F0%9F%94%8D</text></svg>">
+</head>
+<body>
+  <div id="topo"></div>
+  <main class="conteudo">
+    <div id="aviso-global" class="aviso"></div>
+
+    <div class="cartao">
+      <div class="cabecalho"><h2 class="cresce">Integridade da trilha</h2>
+        <button class="btn pequeno" id="btn-verificar">Verificar cadeia</button></div>
+      <p class="discreto" style="margin:0 0 .7rem">
+        Cada registro guarda o hash do anterior. Qualquer alteracao ou remocao feita
+        diretamente no banco quebra a cadeia e e apontada abaixo.</p>
+      <div id="integridade"></div>
+    </div>
+
+    <div class="cartao" id="cartao-flags" hidden>
+      <div class="cabecalho"><h2 class="cresce">Feature flags do app do paciente</h2>
+        <span class="selo devops">Trilha DevOps</span></div>
+      <p class="discreto" style="margin:0 0 .7rem">
+        Desligar uma flag remove a funcionalidade em producao imediatamente,
+        sem novo deploy. E o mecanismo de rollback da trilha DevOps.</p>
+      <div id="flags"></div>
+    </div>
+
+    <div class="cartao">
+      <div class="cabecalho"><h2 class="cresce">Registros</h2>
+        <select id="filtro-entidade" style="width:auto">
+          <option value="">Todas as entidades</option>
+          <option value="sessao">Sessao</option>
+          <option value="paciente">Paciente</option>
+          <option value="atendimento">Atendimento</option>
+          <option value="evolucao">Evolucao</option>
+          <option value="prescricao">Prescricao</option>
+          <option value="sinais_vitais">Sinais vitais</option>
+          <option value="chamado">Chamado</option>
+          <option value="ambulancia">Ambulancia</option>
+          <option value="feature_flag">Feature flag</option>
+        </select>
+      </div>
+      <div id="registros"><p class="vazio">Carregando...</p></div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { api, $, $$, esc, aviso, dataHora, titulo, montarTopo, ligarBotaoSair, exigirPapel, lerSessao } from '/js/comum.js';
+
+    const sessao = exigirPapel(['auditor', 'admin']);
+    if (sessao) iniciar();
+
+    const COR_ACAO = {
+      LOGIN: 'verde', LOGIN_FALHOU: 'vermelho', BLOQUEAR: 'vermelho', CANCELAR: 'laranja',
+      CRIAR: 'azul', ABRIR: 'azul', REGISTRAR: 'azul', PRESCREVER: 'amarelo',
+      DESPACHAR: 'laranja', ADMITIR: 'verde', ENCERRAR: 'verde', LER: 'neutro', ATUALIZAR: 'neutro',
+    };
+
+    async function iniciar() {
+      $('#topo').innerHTML = montarTopo({
+        modulo: 'Trilha de Auditoria', trilha: 'nucleo',
+        links: [{ href: '/nucleo.html', texto: 'Prontuario' }, { href: '/despacho.html', texto: 'Despacho' }],
+      });
+      ligarBotaoSair();
+
+      if (lerSessao()?.usuario?.papel === 'admin') {
+        $('#cartao-flags').hidden = false;
+        carregarFlags();
+      }
+
+      $('#btn-verificar').addEventListener('click', verificar);
+      $('#filtro-entidade').addEventListener('change', carregarRegistros);
+      await Promise.all([verificar(), carregarRegistros()]);
+    }
+
+    async function verificar() {
+      try {
+        const r = await api('/api/nucleo/auditoria/integridade');
+        $('#integridade').innerHTML = r.integra ? `
+          <div class="aviso sucesso mostrar">
+            <strong>Cadeia integra.</strong> ${r.registros} registros verificados.
+            <div class="mono" style="margin-top:.3rem;font-size:.72rem">ultimo hash ${esc(r.ultimoHash)}</div>
+          </div>` : `
+          <div class="aviso erro mostrar">
+            <strong>Integridade violada.</strong> A cadeia foi rompida no registro #${r.quebradoEm}
+            (${esc(r.motivo)}). Total de ${r.registros} registros.
+          </div>`;
+      } catch (erro) { aviso($('#aviso-global'), erro); }
+    }
+
+    async function carregarRegistros() {
+      try {
+        const entidade = $('#filtro-entidade').value;
+        const linhas = await api(`/api/nucleo/auditoria?limite=200${entidade ? `&entidade=${entidade}` : ''}`);
+        $('#registros').innerHTML = linhas.length ? `
+          <table>
+            <thead><tr><th>#</th><th>Quando</th><th>Ator</th><th>Acao</th><th>Entidade</th><th>Detalhes</th><th>Hash</th></tr></thead>
+            <tbody>${linhas.map((l) => `
+              <tr>
+                <td class="mono discreto">${l.id}</td>
+                <td class="nowrap discreto">${dataHora(l.criado_em)}</td>
+                <td>${esc(l.ator_nome)}<div class="discreto">${esc(titulo(l.papel))}</div></td>
+                <td><span class="etq ${COR_ACAO[l.acao] ?? 'neutro'}">${esc(l.acao)}</span></td>
+                <td>${esc(titulo(l.entidade))}${l.entidade_id ? ` <span class="discreto">#${esc(l.entidade_id)}</span>` : ''}</td>
+                <td class="discreto" style="max-width:280px;word-break:break-word;font-size:.78rem">${esc(l.detalhes ?? '')}</td>
+                <td class="mono discreto" style="font-size:.7rem" title="${esc(l.hash)}">${esc(l.hash.slice(0, 10))}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>` : '<p class="vazio">Nenhum registro.</p>';
+      } catch (erro) { aviso($('#aviso-global'), erro); }
+    }
+
+    async function carregarFlags() {
+      try {
+        const mapa = await api('/api/app/flags');
+        $('#flags').innerHTML = `
+          <table><tbody>${Object.entries(mapa).map(([chave, ativo]) => `
+            <tr>
+              <td class="mono">${esc(chave)}</td>
+              <td><span class="etq ${ativo ? 'verde' : 'neutro'}">${ativo ? 'Ativa' : 'Desligada'}</span></td>
+              <td class="direita">
+                <button class="btn pequeno ${ativo ? 'perigo' : ''}" data-chave="${esc(chave)}" data-ativo="${ativo}">
+                  ${ativo ? 'Desligar' : 'Ligar'}
+                </button></td>
+            </tr>`).join('')}
+          </tbody></table>`;
+
+        $$('#flags button[data-chave]').forEach((b) => b.addEventListener('click', async () => {
+          try {
+            await api(`/api/app/flags/${b.dataset.chave}`,
+              { method: 'PATCH', corpo: { ativo: b.dataset.ativo !== 'true' } });
+            await Promise.all([carregarFlags(), carregarRegistros(), verificar()]);
+          } catch (erro) { aviso($('#aviso-global'), erro); }
+        }));
+      } catch (erro) { aviso($('#aviso-global'), erro); }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "prontuario-eletronico-despacho",
+  "version": "1.0.0",
+  "description": "Prontuario eletronico hospitalar e sistema de despacho de ambulancias - Avaliacao N1, Gerencia, Configuracao e Processos de Software",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "seed": "node src/db/seed.js",
+    "reset": "node -e \"const{rmSync}=require('fs');for(const s of ['','-wal','-shm'])rmSync('./data/hospital.db'+s,{force:true})\" && node src/db/seed.js",
+    "test": "node --test 'tests/**/*.test.js'",
+    "test:nucleo": "node --test 'tests/nucleo/*.test.js'",
+    "test:app": "node --test 'tests/app-paciente/*.test.js'",
+    "lint": "node --check src/server.js && node scripts/lint.js",
+    "seguranca": "node scripts/verifica-seguranca.js",
+    "auditoria:verificar": "node scripts/verifica-auditoria.js",
+    "test:contrato": "node --test 'tests/contrato/*.test.js'"
+  },
+  "author": "Henrique Tomazoni Andrade",
+  "license": "UNLICENSED"
+}

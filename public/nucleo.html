@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prontuario Eletronico &middot; Painel Hospitalar</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%E2%9A%95</text></svg>">
+</head>
+<body>
+  <div id="topo"></div>
+
+  <main class="conteudo">
+    <div class="abas" id="abas">
+      <button data-aba="atendimentos" class="ativa">Atendimentos</button>
+      <button data-aba="pacientes">Pacientes</button>
+    </div>
+
+    <div id="aviso-global" class="aviso"></div>
+
+    <!-- ============================ ATENDIMENTOS ======================= -->
+    <section id="painel-atendimentos" class="colunas c2">
+      <div>
+        <div class="cartao">
+          <div class="cabecalho">
+            <h2 class="cresce">Fila de atendimento</h2>
+            <select id="filtro-status" style="width:auto">
+              <option value="abertos">Em aberto</option>
+              <option value="alta">Alta</option>
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div id="lista-atendimentos"><p class="vazio">Carregando...</p></div>
+        </div>
+
+        <div class="cartao" id="cartao-abrir-atendimento">
+          <div class="cabecalho"><h3 class="cresce">Abrir atendimento</h3></div>
+          <div id="aviso-abrir" class="aviso"></div>
+          <form id="form-atendimento">
+            <label for="at-paciente">Paciente</label>
+            <select id="at-paciente" name="paciente_id" required></select>
+            <div class="linha">
+              <div>
+                <label for="at-tipo">Tipo</label>
+                <select id="at-tipo" name="tipo">
+                  <option value="emergencia">Emergencia</option>
+                  <option value="ambulatorial">Ambulatorial</option>
+                  <option value="internacao">Internacao</option>
+                </select>
+              </div>
+              <div>
+                <label for="at-risco">Classificacao de risco</label>
+                <select id="at-risco" name="classificacao_risco">
+                  <option value="">Nao classificado</option>
+                  <option value="vermelho">Vermelho - Emergencia</option>
+                  <option value="laranja">Laranja - Muito urgente</option>
+                  <option value="amarelo">Amarelo - Urgente</option>
+                  <option value="verde">Verde - Pouco urgente</option>
+                  <option value="azul">Azul - Nao urgente</option>
+                </select>
+              </div>
+            </div>
+            <input type="hidden" name="origem" value="balcao">
+            <label for="at-queixa">Queixa principal</label>
+            <textarea id="at-queixa" name="queixa_principal" required style="min-height:60px"
+              placeholder="Relato do motivo da procura pelo servico"></textarea>
+            <label for="at-leito">Leito (opcional)</label>
+            <input id="at-leito" name="leito" placeholder="PS-04">
+            <button class="btn" type="submit">Abrir atendimento</button>
+          </form>
+        </div>
+      </div>
+
+      <div id="detalhe-atendimento">
+        <div class="cartao"><p class="vazio">Selecione um atendimento na fila para abrir o prontuario.</p></div>
+      </div>
+    </section>
+
+    <!-- ============================= PACIENTES ========================= -->
+    <section id="painel-pacientes" class="colunas c2" hidden>
+      <div class="cartao">
+        <div class="cabecalho"><h2 class="cresce">Pacientes</h2></div>
+        <input id="busca-paciente" placeholder="Buscar por nome ou CPF...">
+        <div id="lista-pacientes" style="margin-top:.8rem"><p class="vazio">Carregando...</p></div>
+      </div>
+
+      <div>
+        <div class="cartao" id="cartao-novo-paciente">
+          <div class="cabecalho"><h3 class="cresce">Cadastrar paciente</h3></div>
+          <div id="aviso-paciente" class="aviso"></div>
+          <form id="form-paciente">
+            <label for="p-nome">Nome completo</label>
+            <input id="p-nome" name="nome" required>
+            <div class="linha">
+              <div><label for="p-cpf">CPF</label><input id="p-cpf" name="cpf" required placeholder="000.000.000-00"></div>
+              <div><label for="p-nasc">Data de nascimento</label><input id="p-nasc" name="data_nascimento" type="date" required></div>
+            </div>
+            <div class="linha3">
+              <div>
+                <label for="p-sexo">Sexo</label>
+                <select id="p-sexo" name="sexo"><option value="F">Feminino</option><option value="M">Masculino</option><option value="O">Outro</option></select>
+              </div>
+              <div>
+                <label for="p-sangue">Tipo sanguineo</label>
+                <select id="p-sangue" name="tipo_sanguineo">
+                  <option value="">-</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+                  <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+                </select>
+              </div>
+              <div><label for="p-tel">Telefone</label><input id="p-tel" name="telefone"></div>
+            </div>
+            <label for="p-end">Endereco</label>
+            <input id="p-end" name="endereco">
+            <button class="btn" type="submit">Cadastrar</button>
+          </form>
+        </div>
+        <div id="detalhe-paciente"></div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/js/nucleo.js"></script>
+</body>
+</html>

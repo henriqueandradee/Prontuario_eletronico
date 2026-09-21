@@ -1,0 +1,44 @@
+# =====================================================================
+# Pipeline do APP DO PACIENTE
+# Processo: DevOps. Deploy continuo, sem portao manual.
+# Rollback por feature flag, sem necessidade de novo deploy.
+# =====================================================================
+name: App do Paciente
+
+on:
+  push:
+    branches: [main]
+    paths: ['src/app-paciente/**', 'public/paciente.html', 'public/js/paciente.js']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  entrega-continua:
+    name: Build, teste e deploy continuo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Verificacao sintatica
+        run: node scripts/lint.js
+
+      - name: Testes do app do paciente
+        run: node --test 'tests/app-paciente/*.test.js'
+
+      # O app consome o nucleo. Se o contrato quebrar, o deploy para aqui -
+      # e a mitigacao do risco de acoplamento apontado na questao 3.
+      - name: Teste de contrato com o nucleo regulado
+        run: node --test 'tests/contrato/*.test.js'
+
+      - name: Deploy automatico (sem aprovacao manual)
+        if: github.ref == 'refs/heads/main'
+        run: echo "Deploy do app do paciente concluido - versao ${{ github.sha }}."
+
+      - name: Monitoramento pos-deploy
+        if: github.ref == 'refs/heads/main'
+        run: |
+          echo "Observar taxa de erro e latencia por 15 minutos."
+          echo "Em caso de degradacao: desligar a feature flag afetada (rollback imediato)."

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sistema Hospitalar &middot; Acesso</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>%E2%9A%95</text></svg>">
+</head>
+<body>
+  <main class="login-tela">
+    <div class="login-caixa">
+      <div style="text-align:center;margin-bottom:1.2rem">
+        <div style="font-size:2rem">&#9877;</div>
+        <h1 style="margin:.4rem 0 .2rem">Prontuario Eletronico e Despacho</h1>
+        <p class="discreto" style="margin:0">Hospital Geral &middot; Central de Regulacao de Urgencias</p>
+      </div>
+
+      <div class="cartao">
+        <div id="aviso" class="aviso"></div>
+        <form id="form-login">
+          <label for="email">E-mail</label>
+          <input id="email" name="email" type="email" autocomplete="username" required>
+          <label for="senha">Senha</label>
+          <input id="senha" name="senha" type="password" autocomplete="current-password" required>
+          <button class="btn" style="width:100%" type="submit">Entrar</button>
+        </form>
+      </div>
+
+      <div class="cartao" style="margin-top:1rem">
+        <h3 style="margin-bottom:.2rem">Perfis de demonstracao</h3>
+        <p class="discreto" style="margin:0">Clique para preencher. Senha de todos: <span class="mono">senha123</span></p>
+        <div class="perfis" id="perfis"></div>
+      </div>
+
+      <p class="discreto" style="text-align:center;margin-top:1rem" id="rodape"></p>
+    </div>
+  </main>
+
+  <script type="module">
+    import { api, guardarSessao, aviso, $, esc } from '/js/comum.js';
+
+    const PERFIS = [
+      { email: 'helena@hospital.local',   nome: 'Dra. Helena Marques',  papel: 'Medico',            destino: '/nucleo.html' },
+      { email: 'camila@hospital.local',   nome: 'Enf. Camila Duarte',   papel: 'Enfermeiro',        destino: '/nucleo.html' },
+      { email: 'juliana@hospital.local',  nome: 'Juliana Alves',        papel: 'Recepcao',          destino: '/nucleo.html' },
+      { email: 'marcos@hospital.local',   nome: 'Marcos Vinicius',      papel: 'Operador despacho', destino: '/despacho.html' },
+      { email: 'diego@hospital.local',    nome: 'Diego Ramos',          papel: 'Socorrista',        destino: '/despacho.html' },
+      { email: 'sandra@hospital.local',   nome: 'Sandra Figueiredo',    papel: 'Auditor',           destino: '/auditoria.html' },
+      { email: 'admin@hospital.local',    nome: 'Administrador',        papel: 'Admin',             destino: '/nucleo.html' },
+      { email: 'paciente1@app.local',     nome: 'Maria Aparecida',      papel: 'Paciente (app)',    destino: '/paciente.html' },
+    ];
+
+    // Cada papel chega direto na tela onde efetivamente trabalha.
+    const DESTINOS = {
+      medico: '/nucleo.html', enfermeiro: '/nucleo.html', recepcao: '/nucleo.html',
+      admin: '/nucleo.html', operador_despacho: '/despacho.html', socorrista: '/despacho.html',
+      auditor: '/auditoria.html', paciente: '/paciente.html',
+    };
+
+    $('#perfis').innerHTML = PERFIS.map((p) => `
+      <button type="button" class="perfil" data-email="${esc(p.email)}">
+        <span>${esc(p.nome)}</span><span class="papel">${esc(p.papel)}</span>
+      </button>`).join('');
+
+    $('#perfis').addEventListener('click', (e) => {
+      const botao = e.target.closest('.perfil');
+      if (!botao) return;
+      $('#email').value = botao.dataset.email;
+      $('#senha').value = 'senha123';
+      $('#form-login').requestSubmit();
+    });
+
+    $('#form-login').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const botao = e.target.querySelector('button');
+      botao.disabled = true;
+      try {
+        const sessao = await api('/api/login', {
+          method: 'POST',
+          corpo: { email: $('#email').value, senha: $('#senha').value },
+        });
+        guardarSessao(sessao);
+        location.href = DESTINOS[sessao.usuario.papel] ?? '/nucleo.html';
+      } catch (erro) {
+        aviso($('#aviso'), erro);
+        botao.disabled = false;
+      }
+    });
+
+    api('/api/saude').then((s) => {
+      $('#rodape').textContent = `versao ${s.versao} · baseline ${s.baseline} · ambiente ${s.ambiente}`;
+    }).catch(() => {});
+  </script>
+</body>
+</html>

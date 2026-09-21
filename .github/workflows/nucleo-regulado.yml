@@ -1,0 +1,150 @@
+# =====================================================================
+# Pipeline do NUCLEO REGULADO (prontuario + despacho)
+# Processo: Cascata. Producao SOMENTE apos aprovacao formal do P.M.
+# Responde a questao 5 do documento de contexto (baseline CTX-1.0).
+# =====================================================================
+name: Nucleo Regulado
+
+on:
+  push:
+    branches: [main, 'release/**']
+    paths: ['src/nucleo/**', 'src/db/**', 'src/lib/**', 'src/rotas.js', 'src/app.js', 'docs/**']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  # ------------------------------------------------------------------
+  # 1. RASTREABILIDADE - o baseline e os requisitos estao versionados?
+  # ------------------------------------------------------------------
+  rastreabilidade:
+    name: Rastreabilidade do baseline
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Baseline de contexto presente
+        run: |
+          test -f docs/00-documento-de-contexto.md || { echo "Baseline CTX ausente"; exit 1; }
+          test -f docs/01-requisitos.md          || { echo "Matriz de requisitos ausente"; exit 1; }
+          echo "Baseline e requisitos versionados."
+
+      - name: Toda mudanca no nucleo cita um requisito (RF-xx / RNF-xx)
+        if: github.event_name == 'pull_request'
+        run: |
+          CORPO="${{ github.event.pull_request.title }} ${{ github.event.pull_request.body }}"
+          echo "$CORPO" | grep -qE '(RF|RNF)-[0-9]+' || {
+            echo "PR do nucleo regulado deve citar o requisito atendido (ex.: RF-07)."
+            exit 1
+          }
+          echo "Requisito rastreado no PR."
+
+  # ------------------------------------------------------------------
+  # 2. QUALIDADE - lint e a suite de testes do nucleo
+  # ------------------------------------------------------------------
+  testes:
+    name: Testes do nucleo
+    runs-on: ubuntu-latest
+    needs: rastreabilidade
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Verificacao sintatica
+        run: node scripts/lint.js
+
+      - name: Suite de testes do nucleo regulado
+        run: node --test 'tests/nucleo/*.test.js'
+
+      - name: Evidencia de teste (exigida para auditoria)
+        if: always()
+        run: |
+          mkdir -p evidencias
+          node --test --test-reporter=tap 'tests/nucleo/*.test.js' > evidencias/testes-nucleo.tap 2>&1 || true
+          echo "commit: ${{ github.sha }}"      >> evidencias/testes-nucleo.tap
+          echo "executado: $(date -u)"          >> evidencias/testes-nucleo.tap
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: evidencias-testes-nucleo
+          path: evidencias/
+          retention-days: 365   # retencao longa: exigencia de auditoria hospitalar
+
+  # ------------------------------------------------------------------
+  # 3. SEGURANCA E CONFORMIDADE - LGPD, RBAC, append-only
+  # ------------------------------------------------------------------
+  seguranca:
+    name: Seguranca e conformidade
+    runs-on: ubuntu-latest
+    needs: rastreabilidade
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Invariantes de seguranca (segredos, RBAC, append-only)
+        run: node scripts/verifica-seguranca.js
+
+      - name: Integridade da trilha de auditoria
+        run: |
+          node src/db/seed.js
+          node scripts/verifica-auditoria.js
+
+      - name: Vulnerabilidades em dependencias
+        run: npm audit --audit-level=moderate || true
+
+  # ------------------------------------------------------------------
+  # 4. HOMOLOGACAO - ambiente espelho, validado pela equipe assistencial
+  # ------------------------------------------------------------------
+  homologacao:
+    name: Implantacao em homologacao
+    runs-on: ubuntu-latest
+    needs: [testes, seguranca]
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')
+    environment:
+      name: homologacao
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22' }
+
+      - name: Subir o sistema e validar a saude
+        run: |
+          node src/db/seed.js
+          NODE_ENV=homologacao node src/server.js &
+          sleep 3
+          curl -sf http://localhost:3000/api/saude | tee /dev/stderr | grep -q '"status":"ok"'
+          echo "Homologacao disponivel para validacao da equipe assistencial."
+
+  # ------------------------------------------------------------------
+  # 5. PRODUCAO - portao de aprovacao FORMAL do P.M.
+  #    O ambiente 'producao' deve ter reviewers obrigatorios configurados
+  #    em Settings > Environments. Sem o aceite, o job nao executa.
+  # ------------------------------------------------------------------
+  producao:
+    name: Implantacao em producao (requer aprovacao do P.M.)
+    runs-on: ubuntu-latest
+    needs: homologacao
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: producao          # <- reviewers obrigatorios: P.M. + responsavel por conformidade
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Registrar o aceite formal da mudanca
+        run: |
+          echo "Versao ........ ${{ github.sha }}"
+          echo "Aprovado por .. ${{ github.actor }}"
+          echo "Data .......... $(date -u)"
+          echo "Baseline ...... CTX-1.0"
+
+      - name: Implantar
+        run: echo "Implantacao do nucleo regulado autorizada e executada."
+
+      - name: Verificacao pos-implantacao
+        run: echo "Checar /api/saude e a integridade da trilha em producao."
