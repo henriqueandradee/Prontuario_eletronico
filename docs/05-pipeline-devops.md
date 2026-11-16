@@ -72,9 +72,9 @@ O resultado dos testes é arquivado como artefato com **365 dias de retenção**
 carimbado com o commit e o horário. Em auditoria hospitalar, dizer "os testes
 passaram" não basta — é preciso mostrar.
 
-### Aprovação formal (job `producao`)
+### Aprovação formal (job `production`)
 
-O job usa o *environment* `producao` do GitHub Actions, que exige revisores
+O job usa o *environment* `production` do GitHub Actions, que exige revisores
 configurados. O pipeline **para** e espera o aceite do P.M. e do responsável por
 conformidade. O aceite fica registrado com autor e data.
 

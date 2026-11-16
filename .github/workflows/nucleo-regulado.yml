@@ -99,15 +99,15 @@ jobs:
         run: npm audit --audit-level=moderate || true
 
   # ------------------------------------------------------------------
-  # 4. HOMOLOGACAO - ambiente espelho, validado pela equipe assistencial
+  # 4. STAGING - ambiente espelho, validado pela equipe assistencial
   # ------------------------------------------------------------------
-  homologacao:
-    name: Implantacao em homologacao
+  staging:
+    name: Implantacao em staging
     runs-on: ubuntu-latest
     needs: [testes, seguranca]
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')
     environment:
-      name: homologacao
+      name: staging
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -116,23 +116,23 @@ jobs:
       - name: Subir o sistema e validar a saude
         run: |
           node src/db/seed.js
-          NODE_ENV=homologacao node src/server.js &
+          NODE_ENV=staging node src/server.js &
           sleep 3
           curl -sf http://localhost:3000/api/saude | tee /dev/stderr | grep -q '"status":"ok"'
-          echo "Homologacao disponivel para validacao da equipe assistencial."
+          echo "Staging disponivel para validacao da equipe assistencial."
 
   # ------------------------------------------------------------------
-  # 5. PRODUCAO - portao de aprovacao FORMAL do P.M.
-  #    O ambiente 'producao' deve ter reviewers obrigatorios configurados
+  # 5. PRODUCTION - portao de aprovacao FORMAL do P.M.
+  #    O ambiente 'production' deve ter reviewers obrigatorios configurados
   #    em Settings > Environments. Sem o aceite, o job nao executa.
   # ------------------------------------------------------------------
-  producao:
-    name: Implantacao em producao (requer aprovacao do P.M.)
+  production:
+    name: Implantacao em production (requer aprovacao do P.M.)
     runs-on: ubuntu-latest
-    needs: homologacao
+    needs: staging
     if: github.ref == 'refs/heads/main'
     environment:
-      name: producao          # <- reviewers obrigatorios: P.M. + responsavel por conformidade
+      name: production          # <- reviewers obrigatorios: P.M. + responsavel por conformidade
     steps:
       - uses: actions/checkout@v4
 
@@ -147,4 +147,4 @@ jobs:
         run: echo "Implantacao do nucleo regulado autorizada e executada."
 
       - name: Verificacao pos-implantacao
-        run: echo "Checar /api/saude e a integridade da trilha em producao."
+        run: echo "Checar /api/saude e a integridade da trilha em production."

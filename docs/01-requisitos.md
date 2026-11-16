@@ -71,7 +71,7 @@ atende — o pipeline recusa o PR sem essa citação.
 | RNF-11 | Entrada validada por esquema antes de qualquer escrita | `lib/validate.js` | diversos |
 | RNF-12 | Contrato entre as trilhas verificado automaticamente | `tests/contrato/` | 8 testes de contrato |
 | RNF-13 | Evidência de teste retida por 365 dias para auditoria | `.github/workflows/nucleo-regulado.yml` | — |
-| RNF-14 | Produção do núcleo exige aprovação formal registrada | `.github/workflows/nucleo-regulado.yml` (environment `producao`) | — |
+| RNF-14 | Produção do núcleo exige aprovação formal registrada | `.github/workflows/nucleo-regulado.yml` (environment `production`) | — |
 
 ## Rastreabilidade
 

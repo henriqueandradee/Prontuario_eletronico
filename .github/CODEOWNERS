@@ -1,0 +1,15 @@
+# Revisores automaticos por area (PGC 2 e 5.2).
+#
+# @FelipeAnjos20 e o par de revisao deste repositorio: e chamado em todo PR.
+# Mudancas em pipelines, scripts, documentacao de GCS e no nucleo regulado sao
+# de maior risco: o Desenvolvedor Lider (@henriqueandradee) tambem e chamado.
+#
+# Vale a ULTIMA linha que casar com o arquivo.
+
+*               @FelipeAnjos20
+/.github/       @henriqueandradee @FelipeAnjos20
+/scripts/       @henriqueandradee @FelipeAnjos20
+/docs/          @henriqueandradee @FelipeAnjos20
+/src/nucleo/    @henriqueandradee @FelipeAnjos20
+/src/db/        @henriqueandradee @FelipeAnjos20
+**/package.json @henriqueandradee @FelipeAnjos20

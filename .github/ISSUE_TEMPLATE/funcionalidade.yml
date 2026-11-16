@@ -1,0 +1,27 @@
+name: Funcionalidade
+description: Proponha uma nova funcionalidade ou melhoria
+title: 'feat: '
+labels: ['funcionalidade']
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: Qual necessidade do hospital isto atende?
+    validations:
+      required: true
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Critérios de aceitação
+      placeholder: |
+        - [ ] O profissional de saúde consegue...
+        - [ ] O sistema impede...
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Área
+      options: [nucleo-prontuario, nucleo-despacho, app-paciente, docs-gcs, pipeline]
+    validations:
+      required: true

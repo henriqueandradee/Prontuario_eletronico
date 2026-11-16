@@ -1,0 +1,8 @@
+# Normaliza finais de linha: evita que maquinas Windows do laboratorio
+# gravem CRLF em scripts que rodam no Linux dos runners do GitHub.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.docx binary
+*.pdf binary
+*.db binary

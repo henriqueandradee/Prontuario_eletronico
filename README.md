@@ -148,7 +148,7 @@ release homologada.
 |---|---|
 | Núcleo em Cascata, app em DevOps | `src/nucleo/` × `src/app-paciente/`, dois workflows separados |
 | Papéis formais e segregação de funções | `src/nucleo/rbac.js` — 8 papéis, verificados por 7 testes |
-| Produção do núcleo exige aprovação formal do P.M. | Environment `producao` com revisores obrigatórios |
+| Produção do núcleo exige aprovação formal do P.M. | Environment `production` com revisores obrigatórios |
 | App com deploy frequente e rollback | `src/app-paciente/flags.js` — 6 feature flags |
 | Risco: integração entre trilhas de ritmos diferentes | `tests/contrato/` — roda nos dois pipelines |
 | LGPD, auditoria e aprovação formal | Trilha encadeada por hash, auditoria de leitura, RBAC |
@@ -201,3 +201,35 @@ Alterar ou remover qualquer linha quebra a cadeia a partir dali, e a verificaç�
 aponta o registro exato.
 
 Detalhamento em [`docs/02-arquitetura.md`](docs/02-arquitetura.md).
+
+---
+
+## Gerência de Configuração
+
+O repositório é tratado como **item de configuração**. O plano que governa este
+repositório é o
+[Plano de Gerenciamento de Configuração de Software (PGCS)](docs/PGCS_Henrique_Andrade.docx)
+— versão 1.1.
+
+### Regras de contribuição
+
+A `main` é protegida: ninguém altera a `main` sem Pull Request revisado por outra
+pessoa, nem o administrador.
+
+1. **Issue** — toda mudança começa por uma Issue
+   (`.github/ISSUE_TEMPLATE/funcionalidade.yml` ou `defeito.yml`).
+2. **Branch** — `feature/<issue>-<descricao>` para funcionalidades,
+   `fix/<issue>-<descricao>` para correções. Ex.: `feature/12-cadastro-paciente`.
+3. **Commits** — [Conventional Commits](https://www.conventionalcommits.org/):
+   `feat(prontuario): adiciona cadastro de paciente`.
+4. **Pull Request** — preencha o `.github/pull_request_template.md` e obtenha
+   **1 aprovação do par de revisão** ([@FelipeAnjos20](https://github.com/FelipeAnjos20)).
+   Os revisores por área estão em `.github/CODEOWNERS`. Aprovações são descartadas
+   a cada novo commit, e o histórico da `main` é linear.
+5. **Squash merge** — é o único merge permitido; o título do PR vira a mensagem do
+   commit na `main` e a branch é apagada automaticamente.
+6. **Staging** — após o merge, o pipeline publica no environment `staging`
+   (somente branches protegidas) para validação da equipe assistencial.
+7. **Production** — o deploy no environment `production` só executa após
+   **aprovação obrigatória de [@henriqueandradee](https://github.com/henriqueandradee)**,
+   que é o aceite formal exigido pelo núcleo regulado (RNF-14).
